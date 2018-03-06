@@ -26,11 +26,13 @@ Reactivity over HTTP has not been standardised until quite recently: 23 January 
 
 WebSub is just webhooks-as-a-standard. Key principle is that to be able to subscribe to events on demand, in a standard way. It's perfect for low-frequency events, ie Git updates.
 
-## Un-paining continuous deployment
+## Un-paining continuous deployment/integration
 
-I couldn't take it any more. Why do I need to manage a Jenkins instance? Why do I need to give deployment credentials to travis-ci? This is where https://git.watch/ was born. Serverless webhooks. Simply run a CLI client that executes a custom command every time your repository is updated. Let your script decide what to do with it. 
+I couldn't take it any more. Why do I need to manage a Jenkins instance? Why do I need to give deployment credentials to travis-ci? This is where https://git.watch/ was born. Serverless webhooks. Simply run a CLI client that executes a custom command every time your repository is updated. Let your script decide what to do with it. Let your client decide what happens, not the server. Now you can test your auto-deployments without having to make those commits called "Test commit" :-).
 
 I didn't understand the point of the whole redundancy in reading changesets and finding deltas via JSON payloads: the data is already there in Git!!
+
+With git-watch, I can literally do: `git-watch -i 'git pull origin && git push somewhere-else'` to sync a Git repository. Wow so simple.
 
 ## Un-paining issue management
 
@@ -46,3 +48,19 @@ git-appraise utilises git-notes: https://git-scm.com/docs/git-notes
 git-notes also has a Jenkins integration: https://github.com/jenkinsci/google-git-notes-publisher-plugin
 
 Fun, isn't it, now that you could have all this data available without any funky APIs?
+
+# Defining this
+
+We define a minimal system of reacting to Git updates. With this reactivity, we can instantly build Issue tracking systems, continuous integration systems, continuous deployment systems, all without coupling and with proper inversion of control.
+
+So, what is the minimum? Well, it is:
+- HTTP endpoint that contains "last updated" date and WebSub tags.
+- Git Server Hook that sends updates to the corresponding WebSub location and changes the "last updated" date.
+
+It's pretty much independent of the Git server implementation, and could even be implemented By GitHub, GitLab and others. Whether they will, is another question. GitHub one day decided to remove git notes. They left a message saying it's no longer supported, refusing to make any indication of why: https://blog.github.com/2010-08-25-git-notes-display/
+
+I intend to build a whole ecosystem around this as I like lightweight things. Most exciting to me is lightweight, framework-free continuous integrations and deployments, in spirit of Git Watch.
+
+Next is Issue tracking that is coupled with Pull requests (or Change Request). Next is enhancing my lovely "Git Work" workflows: see more @ http://git.work/
+
+Good night, chaps.
