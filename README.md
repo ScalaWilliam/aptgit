@@ -54,7 +54,7 @@ Fun, isn't it, now that you could have all this data available without any funky
 We define a minimal system of reacting to Git updates. With this reactivity, we can instantly build Issue tracking systems, continuous integration systems, continuous deployment systems, all without coupling and with proper inversion of control.
 
 So, what is the minimum? Well, it is:
-- HTTP endpoint that contains "last updated" date and WebSub tags.
+- HTTP endpoint that contains "last updated" date, WebSub tags and `link` tags to the relevant Git repository.
 - Git Server Hook that sends updates to the corresponding WebSub location and changes the "last updated" date.
 
 It's pretty much independent of the Git server implementation, and could even be implemented By GitHub, GitLab and others. Whether they will, is another question. GitHub one day decided to remove git notes. They left a message saying it's no longer supported, refusing to make any indication of why: https://blog.github.com/2010-08-25-git-notes-display/
