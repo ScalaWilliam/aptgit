@@ -63,4 +63,8 @@ I intend to build a whole ecosystem around this as I like lightweight things. Mo
 
 Next is Issue tracking that is coupled with Pull requests (or Change Request). Next is enhancing my lovely "Git Work" workflows: see more @ http://git.work/
 
-Good night, chaps.
+Interestingly, because the "minimum implementation" is so simple, is also achievable while still continuing to use GitHub. For this, we build a component called "GitHub-to-WebSub".
+
+Another component, to be able to do something like "Git Watch", is "websub-to-eventsource" (to remove need for a web server) and "websub-execute" (using the eventsource function).
+
+Once these pieces are in place, we can begin solutioning a Git server with more flexible and powerful workflows and permisionings. We can capture WebSub notifications to receive other peoples updates to their clones of repositories and collate that into the original repository as external events. Thus, we've become distributed again :-)...
