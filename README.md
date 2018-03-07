@@ -116,3 +116,4 @@ In particular, gitolite-shell.
 
 http://gitolite.com/gitolite/contrib/ssh-and-http/
 
+I suppose I should make some visuals of what I want to achieve... pictures and videos will speak a thousand words. Perhaps that's all I need to do to get people interested and also validate my own ideas a little.
