@@ -12,7 +12,7 @@ I've faced countless problems with this coupled information being torn apart, wh
 
 Once I began working in larger teams, I came across issue systems. In particular, JIRA, and later on, GitHub. So powerful, yet so... hard to analyse: dozens of HTTP endpoints, authentications and parsing magic to happen. Why can't I re-use my Git authentication? Why can't I simply access this as data, locally? Why do I have to be worried about whether GitHub will one day decide to remove my project, and thus kill its whole Issue history? I shouldn't be. Just like I'm not worried about the code as it's cloned locally and in multiple places, why can't the issues be as well?
 
---
+---
 
 Later on in my career, especially 2016 onwards, I kept facing this annoying thing: having to enforce rules in development workflows by *telling* and *ordering* people around. I don't like to order people around. So if I want somebody to get something done, I need a manager to help.
 
@@ -43,6 +43,8 @@ As I develop incrementally, I like to get as much as possible unblocked and then
 git-appraise, by Google, allows distributed code reviews: https://github.com/google/git-appraise
 Again, why should it be centralised at all?
 
+Tutorial: https://github.com/google/git-appraise/blob/master/docs/tutorial.md
+
 git-appraise utilises git-notes: https://git-scm.com/docs/git-notes
 
 git-notes also has a Jenkins integration: https://github.com/jenkinsci/google-git-notes-publisher-plugin
@@ -68,3 +70,49 @@ Interestingly, because the "minimum implementation" is so simple, is also achiev
 Another component, to be able to do something like "Git Watch", is "websub-to-eventsource" (to remove need for a web server) and "websub-execute" (using the eventsource function).
 
 Once these pieces are in place, we can begin solutioning a Git server with more flexible and powerful workflows and permisionings. We can capture WebSub notifications to receive other peoples updates to their clones of repositories and collate that into the original repository as external events. Thus, we've become distributed again :-)...
+
+
+# Let's bring order back into Git
+
+```
+$ git commit -m 'bugfix.'
+$ git push origin bugfix-for-thing
+```
+
+Why is this even allowed?
+
+Shouldn't be. Anything that doesn't match this standard needs to be swiftly rejected by the server. 
+
+Also I believe there should be an option to prevent random branch creation (without a corresponding issue, for example). The creation of the issue should create a branch quickly, and only allow authorised users to push as well. Read more: http://gitolite.com/gitolite/overview/
+
+There's a nice framework called gitolite which comes with a variety of rules and its own language to program the rules: access control, what files can be touched, what branches can be touched, and lots of scriptability and customisability.
+
+However, its default mode of operation is via DSL and not code. This has pros and cons: easier to get started with, but harder to match your specific use-case. The whole thing could be massively simplified if it dealt with the core moving parts (like user authentication keys) and didn't have its own DSL.
+
+Problem with DSLs such as this one is poor parseability, manipulability as they are plain text and not normally typed. Cause I would like to potentially do my configuration via web UI or simply via APIs. Would be much easier to just write some code & create DSLs & data structures that tightly wrap your specific use-cases instead.
+
+What do I like about gitolite and what can I borrow for some sort of awesome workflow system?
+
+- Public key management (`authorized_keys`).
+- Pretty documentation that explains all you need to know.
+- Easy installation.
+- Exploration of different access control models (personal branches, wildcard branches, etc).
+- Multiple repository management
+- `.git/config` management
+- virtual refs: making normal git hooks work (gitolite "intercepts" the standard Git push process). Can prevent many things from happening this way.
+- access control delegation - but something I would not want to implement at all.
+- this list: http://gitolite.com/gitolite/list-non-core/
+- glssh documentation! http://gitolite.com/gitolite/glssh/
+
+And did I also mention the really comprehensive and high quality documentation?
+
+Note also that fossil scm (what hosts sqlite) is quite inspiration too as all the Issues run inside there and most of Fossil could still be implemented into Git had we some proper access controls going.
+
+
+
+
+Via gitolite's documentation of its internals, we can achieve a lot: http://gitolite.com/gitolite/internals/
+In particular, gitolite-shell.
+
+http://gitolite.com/gitolite/contrib/ssh-and-http/
+
