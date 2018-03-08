@@ -166,6 +166,16 @@ I propose it's because the software does not prevent them from doing so. I would
 
 If the user does not accept this workflow, they are free to fork and do their own thing. Simple. So, we need a nice simple mechanism that simply controls this workflow, thereby bringing the user into immediate communication before starting the development work.
 
+# WebMention/WebSub-based Pull Requests // alternative to GitHub
+
+As Git is supposed to be distributed, why can the users not have repositories under their own domains?
+
+But when they have their own domains with their own repositories and their own software running there... how do they create pull requests? Well, https://www.w3.org/TR/webmention/
+
+:-)
+
+To encourage users to host on their own domains, we'd need to first give them the option to host on a managed platform (easy sign-up), and then give them the option to migrate out pain-free into your own server, where you have more power and freedoms.
+
 # Problems we'd like to solve
 
 It's all about the technical project manager / architect who is driving the project. His goal is to deliver measurably and pay people for the results they achieve rather than the time they spend.
