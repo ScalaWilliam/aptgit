@@ -142,6 +142,29 @@ This is contrary to implementing the perfect thing all-at-once. Such things are 
 
 By doing things incrementally, you achieve this perfect-sized changes to the code that can be measured and analysed effectively.
 
+Let's look at one case close to home, that is done non-incrementally: https://github.com/scala-native/scala-native/pull/1143
+At time of writing, this pull request has been alive for 2 months. I'm just wondering why this change could not be done incrementally, one small PR at a time? Notice how it has already diverged and it's a maintenance pain.
+
+## Open contribution models
+
+I've faced the following problem: somebody contributes a code change which has potential flaws:
+- Change-set is large, so difficult to review
+- Change-set does not solve a real problem, so is a burden
+- Change-set solves the problem incorrectly
+
+I've faced those awkward situations where a person spends a good week or two making changes which I don't feel comfortable accepting. Actually, I've faced it plenty of times professionally as well.
+
+What's the cause of this issue? There are two: 
+- It's working in silence, not communicating.
+- Making it difficult to fork or extend your project independently.
+
+The latter in particular is very interesting: instead of being forced to reject a change, or accept it and then face the consequences of maintaining somebody else's code, why can the user not simply maintain it themselves in their own codebase? Well, they could, if you had a good modular architecture of your product/ecosystem, that wouldn't force the contributor to make changes in *your* core.
+
+The former is interesting because: why do people like to work in silence, on their own ideas, without posing some questions first just to determine viability?
+
+I propose it's because the software does not prevent them from doing so. I would not like to see a fix to something that does not have an Issue associated with it. Therefore, I'd like to not have a Pull Request unless it is associated with an Issue. And I wouldn't like to allow a PR to be opened unless the Issue is accepted as a real Issue.
+
+If the user does not accept this workflow, they are free to fork and do their own thing. Simple. So, we need a nice simple mechanism that simply controls this workflow, thereby bringing the user into immediate communication before starting the development work.
 
 # Problems we'd like to solve
 
