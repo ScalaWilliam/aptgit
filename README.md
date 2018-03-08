@@ -117,3 +117,37 @@ In particular, gitolite-shell.
 http://gitolite.com/gitolite/contrib/ssh-and-http/
 
 I suppose I should make some visuals of what I want to achieve... pictures and videos will speak a thousand words. Perhaps that's all I need to do to get people interested and also validate my own ideas a little.
+
+
+## Git Work
+
+Pay-for-task. Difficulty here is determining the right scope of work and simply defining what is to be achieved.
+
+I've tried it out successfully on my own projects but was limited by GitHub's difficult extensibility. This is one major reason why I'm so keen to break out of it and do higher things.
+
+I don't want to give up control of the project by handing it over to a freelancer or some entity who controls the shape of the project, unless they really know better than me. Paying per hour has the problem of "what have you been doing for this money (= k * time)?", and paying fixed price has the problem of "what have you foregone in order to do this faster?". In both cases, there is little measurability because tasks are not in any special break-down.
+
+Once I have a break-down I can put a price tag and then place the request for effort on the market. Anyone can pick it up and complete it.
+
+Ideal piece of work is as small as possible. It also has to be as cheap as possible to be money/size/time-effective.
+
+
+## Incremental development
+
+It's all about unblocking.
+
+Create the minimal possible implementation of what you need, so that others can use it. You've just unblocked a user/consumer so he can use your interface. Now, you can refine it in a separate task/iteration.
+
+This is contrary to implementing the perfect thing all-at-once. Such things are usually high-risk because a far higher quantity of assumptions (including integration points) are untested. Implementing all-at-once, in a monolithic way, does not give detailed insight into how the work is done, where the blockers are.
+
+By doing things incrementally, you achieve this perfect-sized changes to the code that can be measured and analysed effectively.
+
+
+# Problems we'd like to solve
+
+It's all about the technical project manager / architect who is driving the project. His goal is to deliver measurably and pay people for the results they achieve rather than the time they spend.
+
+I, as technical manager, want:
+
+- Nobody to be able to push code that does not match the standards
+- ...
