@@ -186,3 +186,30 @@ I, as technical manager, want:
 
 - Nobody to be able to push code that does not match the standards
 - ...
+
+# Accepting distributed pull requests
+
+E-mail is certainly an option but so should be the use of WebMention. WebMention would allow anonymous submissions of pull requests, yet both parties could retain control of their own domains/repositories.
+
+# Core principle
+
+This is what enables everything to happen:
+
+> WebSub applied to Git
+
+## How to achieve it, minimally, for demonstration?
+
+We can use ATDD style approach:
+
+1. Set up a Git server
+2. Push to Git server
+3. Git server updates an 'index HTML page'
+4. Git server POSTs to the 'hub' of the 'index HTML page'
+5. The 'hub' receives the POST and puts the content into a test-assertion-file
+6. We verify the assertion.
+
+By TDDing it, we achieve the minimalist thing.
+
+This would be perfectly fine for single-user cases, but not good for multi-user. For multi-user, we'd need to achieve the same test but with Gitolite. The test suite should be roughly reusable.
+
+
