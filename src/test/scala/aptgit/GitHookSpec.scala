@@ -65,12 +65,9 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     "Discover an updated HTML page when a push is made" in {
       val blahPath = Paths.get("target/blah.html")
       val lastModifiedBefore = Files.getLastModifiedTime(blahPath)
-      info(s"Last modified before: ${lastModifiedBefore}")
-      val resultOfCloneAndPush = executeCommand("/test-setup/clone-and-push.sh")
-      info(s"Clone & Push result: ${resultOfCloneAndPush}")
+      executeCommand("/test-setup/clone-and-push.sh")
       val lastModifiedAfter = Files.getLastModifiedTime(blahPath)
       assert(lastModifiedAfter != lastModifiedBefore)
-      info(s"Last modified after: ${lastModifiedAfter}")
     }
 
   }
