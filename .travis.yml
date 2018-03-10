@@ -11,7 +11,7 @@ jdk:
   - oraclejdk9
 
 script:
-  - cd test-server && docker build -t test-server .
+  - (cd test-server && docker build -t test-server .)
   - sbt test
 
 cache:

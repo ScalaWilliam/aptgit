@@ -1,20 +1,15 @@
 package aptgit
-import java.nio.file.{Files, Paths}
+import java.nio.file.Paths
 
 import com.spotify.docker.client.{DefaultDockerClient, DockerClient}
 import com.whisk.docker.impl.spotify.DockerKitSpotify
 import com.whisk.docker.scalatest.DockerTestKit
-import com.whisk.docker.{
-  ContainerLink,
-  DockerContainer,
-  DockerPortMapping,
-  VolumeMapping
-}
+import com.whisk.docker.{ContainerLink, DockerContainer, DockerPortMapping, VolumeMapping}
 import org.scalatest.Matchers._
 import org.scalatest._
 
-import scala.concurrent.duration._
 import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
