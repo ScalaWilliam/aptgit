@@ -22,6 +22,13 @@ for websub_file in repo.config.get_multivar("websub.files"):
             hub_url = hub_url_link.get("href")
             for updated_meta in html.xpath('//meta[@name="updated"]')[:1]:
                 updated_meta.set("content", new_date)
+                output_html = etree.tostring(html, encoding='unicode')
                 with open(websub_file, 'w') as f:
-                    f.write(etree.tostring(html, encoding='unicode'))
-                requests.post(hub_url, data={'hub.mode': 'publish', 'hub.url': self_url})
+                    f.write(output_html)
+                r = requests.get(self_url)
+                r.raise_for_status()
+                # Verify we're working indeed.
+                assert output_html == r.text, \
+                    "Output contents not matching. URL: %s" % self_url
+                r2 = requests.post(hub_url, data={'hub.mode': 'publish', 'hub.url': self_url})
+                r2.raise_for_status()

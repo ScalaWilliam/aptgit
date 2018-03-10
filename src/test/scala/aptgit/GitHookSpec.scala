@@ -60,14 +60,17 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
       "1. Configure WebSub publisher" in {
         executeCommand("/test-setup/prepare-websub-publish.sh")
       }
+      "2. Ensure the static HTTP server is running" in {
+        executeCommand("wget -O - -q http://simple_http_server:8080/blah.html") should include(
+          "never")
+      }
     }
 
     "Discover an updated HTML page when a push is made" in {
-      val blahPath = Paths.get("target/docker-env/blah.html")
-      val lastModifiedBefore = Files.getLastModifiedTime(blahPath)
-      executeCommand("/test-setup/clone-and-push.sh")
-      val lastModifiedAfter = Files.getLastModifiedTime(blahPath)
-      assert(lastModifiedAfter != lastModifiedBefore)
+      val pushResult = executeCommand("/test-setup/clone-and-push.sh")
+      withClue(s"Push result was: ${pushResult}") {
+        executeCommand("wget -O - -q http://simple_http_server:8080/blah.html") should not include ("never")
+      }
     }
 
   }
@@ -84,15 +87,22 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     rw = true,
   )
 
+  private val targetVolume2 = VolumeMapping(
+    host = Paths.get("target/docker-env").toAbsolutePath.toString,
+    container = "/var/www/",
+    rw = true,
+  )
+
   private val simpleHttpServerContainer =
     DockerContainer(simpleHttpServerImageName,
                     name = Some("simple_http_server"))
-      .withVolumes(List(targetVolume))
-      .withPortMapping(80 -> DockerPortMapping())
+      .withVolumes(List(targetVolume2))
+      .withPortMapping(8080 -> DockerPortMapping())
 
   private val gitServerContainer = DockerContainer(gitDockerImageName)
     .withVolumes(List(testSetupVolume, targetVolume))
-    .withLinks(ContainerLink(simpleHttpServerContainer, alias = "static"))
+    .withLinks(
+      ContainerLink(simpleHttpServerContainer, alias = "simple_http_server"))
 
   override def dockerContainers: List[DockerContainer] = {
     val containers = super.dockerContainers.toBuffer
@@ -105,7 +115,7 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     DefaultDockerClient.fromEnv.build
 
   private def executeCommand(command: String): String = {
-    executeCommand(Array(command))
+    executeCommand(command.split(" "))
   }
 
   private def executeCommand(commandParts: Array[String]): String = {
