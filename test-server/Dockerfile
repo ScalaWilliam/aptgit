@@ -2,6 +2,9 @@ FROM jkarlos/git-server-docker
 
 # https://github.com/gliderlabs/docker-alpine/blob/master/docs/usage.md
 RUN apk add --no-cache \
+  libxslt-dev \
+  libxml2-dev \
+  libgit2-dev \
   curl \
   python \
   python-dev \
