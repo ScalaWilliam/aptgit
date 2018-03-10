@@ -1,18 +1,26 @@
 package aptgit
-import java.nio.file.Paths
+import java.nio.file.{Files, Paths}
 
 import com.spotify.docker.client.{DefaultDockerClient, DockerClient}
 import com.whisk.docker.impl.spotify.DockerKitSpotify
 import com.whisk.docker.scalatest.DockerTestKit
-import com.whisk.docker.{DockerContainer, VolumeMapping}
+import com.whisk.docker.{
+  ContainerLink,
+  DockerContainer,
+  DockerPortMapping,
+  VolumeMapping
+}
 import org.scalatest.Matchers._
 import org.scalatest._
+
 import scala.concurrent.duration._
 import scala.concurrent.Await
 
 class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
-  private val gitDockerImageName = "jkarlos/git-server-docker"
+  private val gitDockerImageName = "test-server"
+//  private val gitDockerImageName = "jkarlos/git-server-docker"
+  private val simpleHttpServerImageName = "trinitronx/python-simplehttpserver"
 
   s"Verify that we can execute Git hooks against Docker image '${gitDockerImageName}'" - {
 
@@ -46,17 +54,55 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     }
   }
 
+  s"Verify that we can execute WebSub hooks against Docker image '${gitDockerImageName}'" - {
+
+    "Prepare environment" - {
+      "1. Configure WebSub publisher" in {
+        executeCommand("/test-setup/prepare-websub-publish.sh")
+      }
+    }
+
+    "Discover an updated HTML page when a push is made" in {
+      val blahPath = Paths.get("target/blah.html")
+      val lastModifiedBefore = Files.getLastModifiedTime(blahPath)
+      info(s"Last modified before: ${lastModifiedBefore}")
+      val resultOfCloneAndPush = executeCommand("/test-setup/clone-and-push.sh")
+      info(s"Clone & Push result: ${resultOfCloneAndPush}")
+      val lastModifiedAfter = Files.getLastModifiedTime(blahPath)
+      assert(lastModifiedAfter != lastModifiedBefore)
+      info(s"Last modified after: ${lastModifiedAfter}")
+    }
+
+  }
+
   private val testSetupVolume = VolumeMapping(
     host = Paths.get("test-setup").toAbsolutePath.toString,
     container = "/test-setup/",
     rw = false,
   )
 
-  private val gitServerContainer = DockerContainer(gitDockerImageName)
-    .withVolumes(testSetupVolume :: Nil)
+  private val targetVolume = VolumeMapping(
+    host = Paths.get("target").toAbsolutePath.toString,
+    container = "/target/",
+    rw = true,
+  )
 
-  override def dockerContainers: List[DockerContainer] =
-    gitServerContainer :: super.dockerContainers
+  private val simpleHttpServerContainer =
+    DockerContainer(simpleHttpServerImageName,
+                    name = Some("simple_http_server"))
+      .withVolumes(List(targetVolume))
+      .withPortMapping(80 -> DockerPortMapping())
+
+  private val gitServerContainer = DockerContainer(gitDockerImageName)
+    .withVolumes(List(testSetupVolume, targetVolume))
+    .withLinks(ContainerLink(simpleHttpServerContainer, alias = "static"))
+
+  override def dockerContainers: List[DockerContainer] = {
+    val containers = super.dockerContainers.toBuffer
+    containers += simpleHttpServerContainer
+    containers += gitServerContainer
+    containers.toList
+  }
 
   private val spotifyDockerClient: DockerClient =
     DefaultDockerClient.fromEnv.build
