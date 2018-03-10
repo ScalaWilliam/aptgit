@@ -38,6 +38,8 @@ With git-watch, I can literally do: `git-watch -i 'git pull origin && git push s
 
 As I develop incrementally, I like to get as much as possible unblocked and then fill the rest of gaps later. I came up with **gitchiu** which creates GitHub Issues from Git commit descriptions. It was really fun as I could specify "bugs" immediately as I create them, even before pushing my code.
 
+https://github.com/neithernut/git-dit <- interesting!
+
 ## Building blocks: git-notes and git-appraise
 
 git-appraise, by Google, allows distributed code reviews: https://github.com/google/git-appraise
