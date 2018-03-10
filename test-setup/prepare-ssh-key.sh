@@ -1,0 +1,4 @@
+#!/bin/sh
+ssh-keygen -t rsa -N "" -f /root/.ssh/id_rsa
+cat /root/.ssh/id_rsa.pub >> /home/git/.ssh/authorized_keys
+cp /test-setup/sshconfig /root/.ssh/config

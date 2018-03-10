@@ -1,61 +1,77 @@
 package aptgit
-import java.nio.file.{Files, Paths}
+import java.nio.file.Paths
 
+import com.spotify.docker.client.{DefaultDockerClient, DockerClient}
 import com.whisk.docker.impl.spotify.DockerKitSpotify
 import com.whisk.docker.scalatest.DockerTestKit
 import com.whisk.docker.{DockerContainer, VolumeMapping}
 import org.scalatest.Matchers._
 import org.scalatest._
+import scala.concurrent.duration._
+import scala.concurrent.Await
 
 class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
-  // todo log in via a docker instance of ssh with an anonymously generated ssh key
-  // so it's self contained
+  private val gitDockerImageName = "jkarlos/git-server-docker"
 
-  private val StandardSshPort = 22
-  private val MappedSshPort = 2222
+  s"Verify that we can execute Git hooks against Docker image '${gitDockerImageName}'" - {
 
-  private val keysMapping = VolumeMapping(
-    host = Paths.get("pub-sample").toAbsolutePath.toString,
-    container = "/git-server/keys",
+    info(
+      "Using test-driven development, we can safely iterate to the full solution.")
+    info(
+      "The set-up was a little painful but dividends will pay off massively...")
+    info("When we begin adding complexity to the system")
+
+    "Prepare environment" - {
+      "1. Configure Git" in {
+        executeCommand("/test-setup/configure-git.sh") shouldBe empty
+      }
+      "2. Prepare SSH key" in {
+        executeCommand("/test-setup/prepare-ssh-key.sh") should include(
+          "public key has been saved")
+      }
+      "3. Prepare Git repository" in {
+        executeCommand("/test-setup/prepare-git-repo.sh") should include(
+          "Initialized empty Git repository")
+      }
+    }
+
+    "Receive a Hook when a push is made" in {
+      executeCommand("/test-setup/clone-and-push.sh") should include(
+        "Received!!")
+    }
+  }
+
+  private val testSetupVolume = VolumeMapping(
+    host = Paths.get("test-setup").toAbsolutePath.toString,
+    container = "/test-setup/",
     rw = false,
   )
 
-  private val reposMapping = VolumeMapping(
-    host = Paths.get("repos").toAbsolutePath.toString,
-    container = "/git-server/repos",
-    rw = true,
-  )
-
-  private val gitServerContainer = DockerContainer("jkarlos/git-server-docker")
-    .withPorts(StandardSshPort -> Some(MappedSshPort))
-    .withVolumes(keysMapping :: reposMapping :: Nil)
+  private val gitServerContainer = DockerContainer(gitDockerImageName)
+    .withVolumes(testSetupVolume :: Nil)
 
   override def dockerContainers: List[DockerContainer] =
     gitServerContainer :: super.dockerContainers
 
-  def pushToGitServer(): Unit = {}
+  private val spotifyDockerClient: DockerClient =
+    DefaultDockerClient.fromEnv.build
 
-  "Log-in is successful" in {
-    val cmd = Seq("ssh",
-                  "-tt",
-                  "git@127.0.0.1",
-                  "-p",
-                  s"${MappedSshPort}",
-                  "-o",
-                  "StrictHostKeyChecking=no",
-                  "-o",
-                  "UserKnownHostsFile=/dev/null")
-    import scala.sys.process._
-    val result = cmd.lineStream_!
-    exactly(1, result) should include("Welcome to git-server-docker")
+  private def executeCommand(command: String): String = {
+    executeCommand(Array(command))
   }
 
-  "It works" in {
-    val expectedFile = Paths.get("received")
-    assert(!Files.exists(expectedFile))
-    info("Pushing to the server...")
-    assert(Files.exists(expectedFile))
+  private def executeCommand(commandParts: Array[String]): String = {
+    val dockerContainerState =
+      containerManager.getContainerState(gitServerContainer)
+    val id = Await.result(dockerContainerState.id, 5.seconds)
+    val execCreation =
+      spotifyDockerClient.execCreate(id,
+                                     commandParts,
+                                     DockerClient.ExecCreateParam.attachStdout,
+                                     DockerClient.ExecCreateParam.attachStderr)
+    val output = spotifyDockerClient.execStart(execCreation.id())
+    output.readFully
   }
 
 }
