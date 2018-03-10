@@ -1,1 +1,2 @@
 --add-modules=java.activation
+-Dfile.encoding=UTF8
