@@ -63,7 +63,7 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     }
 
     "Discover an updated HTML page when a push is made" in {
-      val blahPath = Paths.get("target/blah.html")
+      val blahPath = Paths.get("target/docker-env/blah.html")
       val lastModifiedBefore = Files.getLastModifiedTime(blahPath)
       executeCommand("/test-setup/clone-and-push.sh")
       val lastModifiedAfter = Files.getLastModifiedTime(blahPath)
@@ -79,7 +79,7 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
   )
 
   private val targetVolume = VolumeMapping(
-    host = Paths.get("target").toAbsolutePath.toString,
+    host = Paths.get("target/docker-env").toAbsolutePath.toString,
     container = "/target/",
     rw = true,
   )
