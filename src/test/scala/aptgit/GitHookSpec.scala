@@ -9,6 +9,9 @@ import org.scalatest._
 
 class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
+  // todo log in via a docker instance of ssh with an anonymously generated ssh key
+  // so it's self contained
+
   private val StandardSshPort = 22
   private val MappedSshPort = 2222
 
