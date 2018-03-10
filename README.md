@@ -203,10 +203,7 @@ We can use ATDD style approach:
 
 1. Set up a Git server
 2. Push to Git server
-3. Git server updates an 'index HTML page'
-4. Git server POSTs to the 'hub' of the 'index HTML page'
-5. The 'hub' receives the POST and puts the content into a test-assertion-file
-6. We verify the assertion.
+3. Git server updates a file as a push hook
 
 By TDDing it, we achieve the minimalist thing.
 
