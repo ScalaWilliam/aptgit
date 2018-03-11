@@ -73,6 +73,21 @@ Another component, to be able to do something like "Git Watch", is "websub-to-ev
 
 Once these pieces are in place, we can begin solutioning a Git server with more flexible and powerful workflows and permisionings. We can capture WebSub notifications to receive other peoples updates to their clones of repositories and collate that into the original repository as external events. Thus, we've become distributed again :-)...
 
+# Owning your data
+
+GitHub has blocked several of my accounts. Apparently a "legal person" cannot have more than 1 account.
+Of course, it's only partly enforced, and only when you use e-mails that are too similar.
+
+GitHub have also threatened to take down one of my repositories under 24-hour notice because
+it contained copyrighted content.
+
+I simply can't rely on their goodwill. What if they take down a whole project,
+with its Issue tracking and Pull requests? How much history will I lose?
+
+It's because I don't own the data, and GitHub does. But I don't want them to own Issue data.
+
+And I want to be able to back up my issue data. But what's better than using Git itself
+to contain the Issue data?
 
 # Let's bring order back into Git
 
