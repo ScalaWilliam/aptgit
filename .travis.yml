@@ -22,3 +22,6 @@ cache:
 before_cache:
   - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
   - find $HOME/.sbt -name "*.lock" -delete
+
+env:
+  - DOCKER_HOST=tcp://127.0.0.1:2375
