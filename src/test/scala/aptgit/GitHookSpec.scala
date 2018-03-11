@@ -19,10 +19,13 @@ import scala.concurrent.duration._
 
 class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
-  private val gitDockerImageName = "scalawilliam/aptgit-test-server"
-  private val httpDumpServerImageName = "scalawilliam/aptgit-http-dump-server"
+  private val gitDockerImageName =
+    "scalawilliam/aptgit-test-server"
+  private val httpDumpServerImageName =
+    "scalawilliam/aptgit-http-dump-server"
 //  private val gitDockerImageName = "jkarlos/git-server-docker"
-  private val simpleHttpServerImageName = "trinitronx/python-simplehttpserver"
+  private val simpleHttpServerImageName =
+    "trinitronx/python-simplehttpserver"
 
   s"Verify that we can execute Git hooks against Docker image '${gitDockerImageName}'" - {
 
@@ -69,7 +72,8 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     }
 
     "Discover an updated HTML page when a push is made" in {
-      val pushResult = executeCommand("/test-setup/clone-and-push.sh")
+      val pushResult =
+        executeCommand("/test-setup/clone-and-push.sh")
       withClue(s"Push result was: ${pushResult}") {
         executeCommand("wget -O - -q http://simple_http_server:8080/blah.html") should not include ("never")
       }
@@ -79,11 +83,13 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
       info("This is the WebSub notify POST")
       val dockerContainerState =
         containerManager.getContainerState(httpDumpServerContainer)
-      val id = Await.result(dockerContainerState.id, 5.seconds)
-      val logStream = spotifyDockerClient.logs(id,
-                                               LogsParam.stderr(),
-                                               LogsParam.stdout(),
-                                               LogsParam.tail(20))
+      val id =
+        Await.result(dockerContainerState.id, 5.seconds)
+      val logStream =
+        spotifyDockerClient.logs(id,
+                                 LogsParam.stderr(),
+                                 LogsParam.stdout(),
+                                 LogsParam.tail(20))
       val logLines = logStream.readFully()
       logLines should include("POST /notify")
       logLines should include(
@@ -99,13 +105,19 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
   )
 
   private val targetVolume = VolumeMapping(
-    host = Paths.get("target/docker-env").toAbsolutePath.toString,
+    host = Paths
+      .get("target/docker-env")
+      .toAbsolutePath
+      .toString,
     container = "/target/",
     rw = true,
   )
 
   private val targetVolume2 = VolumeMapping(
-    host = Paths.get("target/docker-env").toAbsolutePath.toString,
+    host = Paths
+      .get("target/docker-env")
+      .toAbsolutePath
+      .toString,
     container = "/var/www/",
     rw = true,
   )
@@ -120,12 +132,13 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     DockerContainer(httpDumpServerImageName, name = Some("http_dump_server"))
       .withVolumes(List(testSetupVolume, targetVolume))
 
-  private val gitServerContainer = DockerContainer(gitDockerImageName)
-    .withVolumes(List(testSetupVolume, targetVolume))
-    .withLinks(
-      ContainerLink(simpleHttpServerContainer, alias = "simple_http_server"),
-      ContainerLink(httpDumpServerContainer, alias = "http_dump_server")
-    )
+  private val gitServerContainer =
+    DockerContainer(gitDockerImageName)
+      .withVolumes(List(testSetupVolume, targetVolume))
+      .withLinks(
+        ContainerLink(simpleHttpServerContainer, alias = "simple_http_server"),
+        ContainerLink(httpDumpServerContainer, alias = "http_dump_server")
+      )
 
   override def dockerContainers: List[DockerContainer] = {
     val containers = super.dockerContainers.toBuffer
@@ -145,13 +158,15 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
   private def executeCommand(commandParts: Array[String]): String = {
     val dockerContainerState =
       containerManager.getContainerState(gitServerContainer)
-    val id = Await.result(dockerContainerState.id, 5.seconds)
+    val id =
+      Await.result(dockerContainerState.id, 5.seconds)
     val execCreation =
       spotifyDockerClient.execCreate(id,
                                      commandParts,
                                      DockerClient.ExecCreateParam.attachStdout,
                                      DockerClient.ExecCreateParam.attachStderr)
-    val output = spotifyDockerClient.execStart(execCreation.id())
+    val output =
+      spotifyDockerClient.execStart(execCreation.id())
     output.readFully
   }
 
