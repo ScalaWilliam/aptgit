@@ -19,7 +19,7 @@ import scala.concurrent.duration._
 
 class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
-  private val gitDockerImageName = "test-server"
+  private val gitDockerImageName = "scalawilliam/aptgit-test-server"
 //  private val gitDockerImageName = "jkarlos/git-server-docker"
   private val simpleHttpServerImageName = "trinitronx/python-simplehttpserver"
 
@@ -142,6 +142,15 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
                                      DockerClient.ExecCreateParam.attachStderr)
     val output = spotifyDockerClient.execStart(execCreation.id())
     output.readFully
+  }
+
+  override def startAllOrFail(): Unit = {
+
+    /** This could take a bit of time **/
+    val buildResult =
+      spotifyDockerClient.build(Paths.get("test-server"), gitDockerImageName)
+    assert(buildResult != null)
+    super.startAllOrFail()
   }
 
 }
