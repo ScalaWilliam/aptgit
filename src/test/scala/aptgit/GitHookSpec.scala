@@ -20,6 +20,7 @@ import scala.concurrent.duration._
 class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
   private val gitDockerImageName = "scalawilliam/aptgit-test-server"
+  private val httpDumpServerImageName = "scalawilliam/aptgit-http-dump-server"
 //  private val gitDockerImageName = "jkarlos/git-server-docker"
   private val simpleHttpServerImageName = "trinitronx/python-simplehttpserver"
 
@@ -77,13 +78,16 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     "Discover a HUB HTTP POST item" in {
       info("This is the WebSub notify POST")
       val dockerContainerState =
-        containerManager.getContainerState(simpleHttpServerContainer)
+        containerManager.getContainerState(httpDumpServerContainer)
       val id = Await.result(dockerContainerState.id, 5.seconds)
       val logStream = spotifyDockerClient.logs(id,
                                                LogsParam.stderr(),
                                                LogsParam.stdout(),
-                                               LogsParam.tail(5))
-      logStream.readFully() should include("POST /notify")
+                                               LogsParam.tail(20))
+      val logLines = logStream.readFully()
+      logLines should include("POST /notify")
+      logLines should include(
+        "hub.url=http%3A%2F%2Fsimple_http_server%3A8080%2Fblah.html&hub.mode=publish")
     }
 
   }
@@ -112,15 +116,22 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
       .withVolumes(List(targetVolume2))
       .withPortMapping(8080 -> DockerPortMapping())
 
+  private val httpDumpServerContainer =
+    DockerContainer(httpDumpServerImageName, name = Some("http_dump_server"))
+      .withVolumes(List(testSetupVolume, targetVolume))
+
   private val gitServerContainer = DockerContainer(gitDockerImageName)
     .withVolumes(List(testSetupVolume, targetVolume))
     .withLinks(
-      ContainerLink(simpleHttpServerContainer, alias = "simple_http_server"))
+      ContainerLink(simpleHttpServerContainer, alias = "simple_http_server"),
+      ContainerLink(httpDumpServerContainer, alias = "http_dump_server")
+    )
 
   override def dockerContainers: List[DockerContainer] = {
     val containers = super.dockerContainers.toBuffer
     containers += simpleHttpServerContainer
     containers += gitServerContainer
+    containers += httpDumpServerContainer
     containers.toList
   }
 
@@ -150,6 +161,12 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     val buildResult =
       spotifyDockerClient.build(Paths.get("test-server"), gitDockerImageName)
     assert(buildResult != null)
+
+    /** This could take a bit of time **/
+    val buildResultHttpDumpServer =
+      spotifyDockerClient.build(Paths.get("http-dump-server"),
+                                httpDumpServerImageName)
+    assert(buildResultHttpDumpServer != null)
     super.startAllOrFail()
   }
 
