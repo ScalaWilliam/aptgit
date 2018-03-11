@@ -78,6 +78,11 @@ Once these pieces are in place, we can begin solutioning a Git server with more 
 GitHub has blocked several of my accounts. Apparently a "legal person" cannot have more than 1 account.
 Of course, it's only partly enforced, and only when you use e-mails that are too similar.
 
+Why would I want to use multiple accounts and not a single one?
+Because I don't want my current company/client to access private projects
+either from other clients or myself. I don't want to share my log-in details with them.
+I don't want to have a single point of failure. Yet it's a policy.
+
 GitHub have also threatened to take down one of my repositories under 24-hour notice because
 it contained copyrighted content.
 
