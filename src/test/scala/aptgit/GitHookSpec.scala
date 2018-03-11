@@ -1,10 +1,16 @@
 package aptgit
 import java.nio.file.Paths
 
+import com.spotify.docker.client.DockerClient.LogsParam
 import com.spotify.docker.client.{DefaultDockerClient, DockerClient}
 import com.whisk.docker.impl.spotify.DockerKitSpotify
 import com.whisk.docker.scalatest.DockerTestKit
-import com.whisk.docker.{ContainerLink, DockerContainer, DockerPortMapping, VolumeMapping}
+import com.whisk.docker.{
+  ContainerLink,
+  DockerContainer,
+  DockerPortMapping,
+  VolumeMapping
+}
 import org.scalatest.Matchers._
 import org.scalatest._
 
@@ -66,6 +72,18 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
       withClue(s"Push result was: ${pushResult}") {
         executeCommand("wget -O - -q http://simple_http_server:8080/blah.html") should not include ("never")
       }
+    }
+
+    "Discover a HUB HTTP POST item" in {
+      info("This is the WebSub notify POST")
+      val dockerContainerState =
+        containerManager.getContainerState(simpleHttpServerContainer)
+      val id = Await.result(dockerContainerState.id, 5.seconds)
+      val logStream = spotifyDockerClient.logs(id,
+                                               LogsParam.stderr(),
+                                               LogsParam.stdout(),
+                                               LogsParam.tail(5))
+      logStream.readFully() should include("POST /notify")
     }
 
   }
