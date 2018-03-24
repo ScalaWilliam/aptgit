@@ -20,7 +20,7 @@ import org.scalatest._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
+trait GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
   private val gitDockerImageName =
     "scalawilliam/aptgit-test-server"
