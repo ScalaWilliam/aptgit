@@ -26,7 +26,6 @@ trait GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     "scalawilliam/aptgit-test-server"
   private val httpDumpServerImageName =
     "scalawilliam/aptgit-http-dump-server"
-//  private val gitDockerImageName = "jkarlos/git-server-docker"
   private val simpleHttpServerImageName =
     "trinitronx/python-simplehttpserver"
 
@@ -42,18 +41,15 @@ trait GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
       executeCommand("/test-setup/prepare-git-repo.sh") should include(
         "Initialized empty Git repository")
     }
+    "4. Configure WebSub publisher" in {
+      executeCommand("/test-setup/prepare-websub-publish.sh")
+    }
   }
 
   s"Verify that we can execute WebSub hooks against Docker image '${gitDockerImageName}'" - {
-
-    "Prepare environment" - {
-      "1. Configure WebSub publisher" in {
-        executeCommand("/test-setup/prepare-websub-publish.sh")
-      }
-      "2. Ensure the static HTTP server is running" in {
-        executeCommand("wget -O - -q http://simple_http_server:8080/blah.html") should include(
-          "never")
-      }
+    "Ensure the HTTP resource can be read" in {
+      executeCommand("wget -O - -q http://simple_http_server:8080/blah.html") should include(
+        "never")
     }
 
     "Discover an updated HTML page when a push is made" in {
