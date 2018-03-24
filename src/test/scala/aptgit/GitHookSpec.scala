@@ -77,7 +77,7 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
       }
     }
 
-    "Discover a HUB HTTP POST item" in {
+    "Discover a HUB HTTP POST item for the prior push" in {
       info("This is the WebSub notify POST")
       val dockerContainerState =
         containerManager.getContainerState(httpDumpServerContainer)
