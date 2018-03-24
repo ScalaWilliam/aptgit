@@ -62,21 +62,26 @@ trait GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
     "Discover a HUB HTTP POST item for the prior push" in {
       info("This is the WebSub notify POST")
-      val dockerContainerState =
-        containerManager.getContainerState(httpDumpServerContainer)
-      val id =
-        Await.result(dockerContainerState.id, 5.seconds)
-      val logStream =
-        spotifyDockerClient.logs(id,
-                                 LogsParam.stderr(),
-                                 LogsParam.stdout(),
-                                 LogsParam.tail(20))
-      val logLines = logStream.readFully()
+      val logLines = httpLines()
       logLines should include("POST /notify")
       logLines should include(
         "hub.url=http%3A%2F%2Fsimple_http_server%3A8080%2Fblah.html&hub.mode=publish")
     }
 
+  }
+
+  def httpLines(): String = {
+    val dockerContainerState =
+      containerManager.getContainerState(httpDumpServerContainer)
+    val id =
+      Await.result(dockerContainerState.id, 5.seconds)
+    val logStream =
+      spotifyDockerClient.logs(id,
+                               LogsParam.stderr(),
+                               LogsParam.stdout(),
+                               LogsParam.tail(20))
+    try logStream.readFully()
+    finally logStream.close()
   }
 
   private val testSetupVolume = VolumeMapping(
