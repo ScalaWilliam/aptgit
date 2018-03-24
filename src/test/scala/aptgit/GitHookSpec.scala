@@ -21,7 +21,11 @@ import org.scalatest._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
+class GitHookSpec
+    extends FreeSpec
+    with DockerTestKit
+    with DockerKitSpotify
+    with DockerClients {
 
   private val gitDockerImageName =
     "scalawilliam/aptgit-test-server"
@@ -147,17 +151,6 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     containers += httpDumpServerContainer
     containers.toList
   }
-
-  private val spotifyDockerClient: DockerClient =
-    DefaultDockerClient.fromEnv.build
-
-  /**
-    * https://github.com/docker-java/docker-java/issues/481#issuecomment-189147787
-    */
-  private val plainDockerClient = DockerClientBuilder
-    .getInstance()
-    .withDockerCmdExecFactory(new NettyDockerCmdExecFactory())
-    .build()
 
   private def executeCommand(dockerContainer: DockerContainer,
                              command: String): String = {
