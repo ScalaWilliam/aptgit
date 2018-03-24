@@ -30,30 +30,17 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
   private val simpleHttpServerImageName =
     "trinitronx/python-simplehttpserver"
 
-  s"Verify that we can execute Git hooks against Docker image '${gitDockerImageName}'" - {
-
-    info(
-      """
-           |Using test-driven development, we can safely iterate to the full solution
-           |The set-up was a little painful but dividends will pay off massively...
-           |When we begin adding complexity to the system
-           |For example, we will want to do user permissions and will be required to verify whether a push fails or not
-           |But we'd rather not live in a test-free world where we have no idea what is going on.
-           |I want this to work!
-           |""".stripMargin)
-
-    "Prepare environment" - {
-      "1. Configure Git" in {
-        executeCommand("/test-setup/configure-git.sh") shouldBe empty
-      }
-      "2. Prepare SSH key" in {
-        executeCommand("/test-setup/prepare-ssh-key.sh") should include(
-          "public key has been saved")
-      }
-      "3. Prepare Git repository" in {
-        executeCommand("/test-setup/prepare-git-repo.sh") should include(
-          "Initialized empty Git repository")
-      }
+  "Prepare environment" - {
+    "1. Configure Git" in {
+      executeCommand("/test-setup/configure-git.sh") shouldBe empty
+    }
+    "2. Prepare SSH key" in {
+      executeCommand("/test-setup/prepare-ssh-key.sh") should include(
+        "public key has been saved")
+    }
+    "3. Prepare Git repository" in {
+      executeCommand("/test-setup/prepare-git-repo.sh") should include(
+        "Initialized empty Git repository")
     }
   }
 
