@@ -239,7 +239,9 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
     /** This could take a bit of time **/
     val buildResult =
-      spotifyDockerClient.build(Paths.get("test-server"), gitDockerImageName)
+      spotifyDockerClient.build(
+        Paths.get("src/test/resources/aptgit/test-git-server"),
+        gitDockerImageName)
     assert(buildResult != null)
 
     /** This could take a bit of time **/
