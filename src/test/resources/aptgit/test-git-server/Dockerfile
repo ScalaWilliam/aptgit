@@ -16,3 +16,4 @@ RUN apk add --no-cache \
 
 COPY requirements.txt /
 RUN pip install -r /requirements.txt
+COPY test-setup /test-setup

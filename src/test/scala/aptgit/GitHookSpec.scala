@@ -93,12 +93,6 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     finally logStream.close()
   }
 
-  private val testSetupVolume = VolumeMapping(
-    host = Paths.get("test-setup").toAbsolutePath.toString,
-    container = "/test-setup/",
-    rw = false,
-  )
-
   private val targetVolume = VolumeMapping(
     host = Paths
       .get("target/docker-env")
@@ -128,7 +122,7 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
   private val gitServerContainer =
     DockerContainer(gitDockerImageName, name = Some("git-server"))
-      .withVolumes(List(testSetupVolume, targetVolume))
+      .withVolumes(List(targetVolume))
       .withLinks(
         ContainerLink(simpleHttpServerContainer, alias = "simple_http_server"),
         ContainerLink(httpDumpServerContainer, alias = "http_dump_server")
