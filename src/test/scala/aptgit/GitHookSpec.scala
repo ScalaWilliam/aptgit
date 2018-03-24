@@ -102,14 +102,8 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     rw = true,
   )
 
-  private val targetVolume2 = VolumeMapping(
-    host = Paths
-      .get("target/docker-env")
-      .toAbsolutePath
-      .toString,
-    container = "/var/www/",
-    rw = true,
-  )
+  private val targetVolume2 =
+    targetVolume.copy(container = "/var/www/")
 
   private val simpleHttpServerContainer =
     DockerContainer(simpleHttpServerImageName,
