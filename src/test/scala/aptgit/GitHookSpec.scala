@@ -67,7 +67,7 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
     "Discover an updated HTML page when a push is made" in {
       val pushResult =
-        executeCommand(gitClientContainer, "/test-setup/clone-and-push.sh")
+        executeCommand(gitClientContainer, "/clone-and-push.sh")
       withClue(s"Push result was: '${pushResult}'") {
         executeCommand(
           gitServerContainer,
@@ -143,7 +143,17 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
   private val gitClientContainer =
     DockerContainer(gitDockerImageName, name = Some("git-client"))
-      .withVolumes(List(testSetupVolume))
+      .withVolumes {
+        val sshConfig = VolumeMapping(
+          host = getClass.getResource("client/sshconfig").getFile,
+          container = "/root/.ssh/config"
+        )
+        val cloneAndPush = VolumeMapping(
+          host = getClass.getResource("client/clone-and-push.sh").getFile,
+          container = "/clone-and-push.sh"
+        )
+        List(sshConfig, cloneAndPush)
+      }
       .withLinks(
         ContainerLink(gitServerContainer, alias = "git-server")
       )
