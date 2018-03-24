@@ -1,6 +1,9 @@
 package aptgit
+import java.io.ByteArrayOutputStream
 import java.nio.file.Paths
 
+import com.github.dockerjava.core.DockerClientBuilder
+import com.github.dockerjava.core.command.ExecStartResultCallback
 import com.spotify.docker.client.DockerClient.LogsParam
 import com.spotify.docker.client.{DefaultDockerClient, DockerClient}
 import com.whisk.docker.impl.spotify.DockerKitSpotify
@@ -51,11 +54,6 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
         executeCommand("/test-setup/prepare-git-repo.sh") should include(
           "Initialized empty Git repository")
       }
-    }
-
-    "Receive a Hook when a push is made" in {
-      executeCommand("/test-setup/clone-and-push.sh") should include(
-        "Received!!")
     }
   }
 
@@ -151,23 +149,39 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
   private val spotifyDockerClient: DockerClient =
     DefaultDockerClient.fromEnv.build
 
+  private val plainDockerClient = DockerClientBuilder.getInstance().build()
+
   private def executeCommand(command: String): String = {
     executeCommand(command.split(" "))
   }
 
+  /**
+    * https://github.com/spotify/docker-client/issues/513#issuecomment-351797933
+    */
   private def executeCommand(commandParts: Array[String]): String = {
     val dockerContainerState =
       containerManager.getContainerState(gitServerContainer)
     val id =
       Await.result(dockerContainerState.id, 5.seconds)
-    val execCreation =
-      spotifyDockerClient.execCreate(id,
-                                     commandParts,
-                                     DockerClient.ExecCreateParam.attachStdout,
-                                     DockerClient.ExecCreateParam.attachStderr)
-    val output =
-      spotifyDockerClient.execStart(execCreation.id())
-    output.readFully
+
+    val response =
+      plainDockerClient
+        .execCreateCmd(id)
+        .withCmd(commandParts: _*)
+        .withAttachStdout(true)
+        .withTty(false)
+        .exec()
+
+    val baos = new ByteArrayOutputStream()
+    try {
+      plainDockerClient
+        .execStartCmd(response.getId)
+        .withDetach(false)
+        .withTty(false)
+        .exec(new ExecStartResultCallback(baos, System.err))
+        .awaitCompletion()
+      new String(baos.toByteArray, "UTF-8")
+    } finally baos.close()
   }
 
   override def startAllOrFail(): Unit = {
@@ -181,6 +195,7 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     val buildResultHttpDumpServer =
       spotifyDockerClient.build(Paths.get("http-dump-server"),
                                 httpDumpServerImageName)
+
     assert(buildResultHttpDumpServer != null)
     super.startAllOrFail()
   }
