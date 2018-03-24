@@ -13,3 +13,5 @@ javacOptions in compile ++= Seq("--release", "9") ++ Seq(
   "--add-modules=java.activation")
 
 fork in Test := true
+
+cancelable in Global := true

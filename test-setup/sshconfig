@@ -1,5 +1,5 @@
 Host local-git
-    Hostname 127.0.0.1
+    Hostname git-server
     User git
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
