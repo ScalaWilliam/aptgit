@@ -31,32 +31,37 @@ trait GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
   "Prepare environment" - {
     "1. Configure Git" in {
-      executeCommand("/test-setup/configure-git.sh") shouldBe empty
+      executeCommand(gitServerContainer, "/test-setup/configure-git.sh") shouldBe empty
     }
     "2. Prepare SSH key" in {
-      executeCommand("/test-setup/prepare-ssh-key.sh") should include(
+      executeCommand(gitServerContainer, "/test-setup/prepare-ssh-key.sh") should include(
         "public key has been saved")
     }
     "3. Prepare Git repository" in {
-      executeCommand("/test-setup/prepare-git-repo.sh") should include(
+      executeCommand(gitServerContainer, "/test-setup/prepare-git-repo.sh") should include(
         "Initialized empty Git repository")
     }
     "4. Configure WebSub publisher" in {
-      executeCommand("/test-setup/prepare-websub-publish.sh")
+      executeCommand(gitServerContainer,
+                     "/test-setup/prepare-websub-publish.sh")
     }
   }
 
   s"Verify that we can execute WebSub hooks against Docker image '${gitDockerImageName}'" - {
     "Ensure the HTTP resource can be read" in {
-      executeCommand("wget -O - -q http://simple_http_server:8080/blah.html") should include(
+      executeCommand(
+        gitServerContainer,
+        "wget -O - -q http://simple_http_server:8080/blah.html") should include(
         "never")
     }
 
     "Discover an updated HTML page when a push is made" in {
       val pushResult =
-        executeCommand("/test-setup/clone-and-push.sh")
+        executeCommand(gitServerContainer, "/test-setup/clone-and-push.sh")
       withClue(s"Push result was: ${pushResult}") {
-        executeCommand("wget -O - -q http://simple_http_server:8080/blah.html") should not include ("never")
+        executeCommand(
+          gitServerContainer,
+          "wget -O - -q http://simple_http_server:8080/blah.html") should not include ("never")
       }
     }
 
@@ -139,16 +144,18 @@ trait GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
   private val plainDockerClient = DockerClientBuilder.getInstance().build()
 
-  private def executeCommand(command: String): String = {
-    executeCommand(command.split(" "))
+  private def executeCommand(dockerContainer: DockerContainer,
+                             command: String): String = {
+    executeCommand(dockerContainer, command.split(" "))
   }
 
   /**
     * https://github.com/spotify/docker-client/issues/513#issuecomment-351797933
     */
-  private def executeCommand(commandParts: Array[String]): String = {
+  private def executeCommand(container: DockerContainer,
+                             commandParts: Array[String]): String = {
     val dockerContainerState =
-      containerManager.getContainerState(gitServerContainer)
+      containerManager.getContainerState(container)
     val id =
       Await.result(dockerContainerState.id, 5.seconds)
 
