@@ -54,8 +54,6 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
         gitClientContainer,
         Array("ssh-keygen", "-t", "rsa", "-N", "", "-f", "/root/.ssh/id_rsa")
       )
-      executeCommand(gitClientContainer,
-                     "cp /test-setup/sshconfig /root/.ssh/config")
       val publicKey =
         executeCommand(gitClientContainer, "cat /root/.ssh/id_rsa.pub")
       addSshKey(publicKey)
