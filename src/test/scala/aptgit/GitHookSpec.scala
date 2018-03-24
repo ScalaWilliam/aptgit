@@ -31,15 +31,11 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
     "trinitronx/python-simplehttpserver"
 
   "Prepare environment" - {
-    "1. Prepare SSH key" in {
-      executeCommand(gitServerContainer, "/test-setup/prepare-ssh-key.sh") should include(
-        "public key has been saved")
-    }
-    "2. Prepare Git repository" in {
+    "1. Prepare Git repository" in {
       executeCommand(gitServerContainer, "/test-setup/prepare-git-repo.sh") should include(
         "Initialized empty Git repository")
     }
-    "3. Configure WebSub publisher" in {
+    "2. Configure WebSub publisher" in {
       executeCommand(gitServerContainer,
                      "/test-setup/prepare-websub-publish.sh")
     }
