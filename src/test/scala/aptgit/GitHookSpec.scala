@@ -131,7 +131,6 @@ class GitHookSpec extends FreeSpec with DockerTestKit with DockerKitSpotify {
 
   private val httpDumpServerContainer =
     DockerContainer(httpDumpServerImageName, name = Some("http_dump_server"))
-      .withVolumes(List(testSetupVolume, targetVolume))
 
   private val gitServerContainer =
     DockerContainer(gitDockerImageName, name = Some("git-server"))
