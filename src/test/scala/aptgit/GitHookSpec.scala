@@ -69,14 +69,10 @@ class GitHookSpec
       info(s"Found repo path: $repositoryPath")
     }
     "2. Configure WebSub publisher" in {
-      executeDockerCommand(
-        gitServerContainer,
-        Array("/test-setup/prepare-websub-publish.sh",
-              hubUrl,
-              topicUrl,
-              gitServerTopicFileLocation,
-              repositoryName)
-      )
+      plainGitServer.setupWebSub(hubUrl,
+                                 topicUrl,
+                                 gitServerTopicFileLocation,
+                                 repositoryName)
     }
   }
 

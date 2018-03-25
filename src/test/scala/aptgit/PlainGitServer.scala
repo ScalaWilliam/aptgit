@@ -28,6 +28,20 @@ final case class PlainGitServer(
     else Right(s"/git-server/repos/$name.git")
   }
 
+  def setupWebSub(hubUrl: String,
+                  topicUrl: String,
+                  gitServerTopicFileLocation: String,
+                  repositoryName: String): Unit = {
+    executeDockerCommand(
+      gitServerContainer,
+      Array("/test-setup/prepare-websub-publish.sh",
+            hubUrl,
+            topicUrl,
+            gitServerTopicFileLocation,
+            repositoryName)
+    )
+  }
+
   def addSshKey(publicKey: String): Unit = {
     val dockerContainerState =
       containerManager.getContainerState(gitServerContainer)
