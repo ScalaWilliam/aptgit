@@ -18,13 +18,14 @@ final case class PlainGitServer(
     spotifyDockerClient: com.spotify.docker.client.DockerClient,
     containerManager: DockerContainerManager) {
 
-  def createRepository(name: String): GitRepositoryPath = {
-    assert(
-      executeDockerCommand(gitServerContainer,
-                           Array("/test-setup/prepare-git-repo.sh", name))
-        .contains("Initialized empty Git repository")
-    )
-    s"/git-server/repos/$name.git"
+  def createRepository(
+      name: String): Either[PlainGitServer.Error, GitRepositoryPath] = {
+    val result = executeDockerCommand(
+      gitServerContainer,
+      Array("/test-setup/prepare-git-repo.sh", name))
+    if (!result.contains("Initialized empty Git repository"))
+      Left(result)
+    else Right(s"/git-server/repos/$name.git")
   }
 
   def addSshKey(publicKey: String): Unit = {
@@ -63,4 +64,5 @@ final case class PlainGitServer(
 }
 object PlainGitServer {
   type GitRepositoryPath = String
+  type Error = String
 }

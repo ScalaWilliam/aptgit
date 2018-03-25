@@ -10,8 +10,10 @@ import com.whisk.docker.{
   DockerPortMapping,
   VolumeMapping
 }
-import org.scalatest.Matchers._
 import org.scalatest._
+import OptionValues._
+import Matchers._
+import EitherValues._
 
 class GitHookSpec
     extends FreeSpec
@@ -53,10 +55,14 @@ class GitHookSpec
   private val httpStaticEndpoint =
     s"http://$staticServerName:${StaticHttpServer.ExposedPort}/$staticFilename"
   private val gitServerHtmlFileLocation = s"/target/$staticFilename"
+  private var repoPath = Option.empty[String]
+  private val repositoryName = "sample-repo"
 
   "Prepare environment" - {
     "1. Prepare Git repository" in {
-      plainGitServer.createRepository("sample")
+      repoPath =
+        Some(plainGitServer.createRepository(repositoryName).right.value)
+      info(s"Found repo path: $repoPath")
     }
     "2. Configure WebSub publisher" in {
       executeDockerCommand(
@@ -64,7 +70,8 @@ class GitHookSpec
         Array("/test-setup/prepare-websub-publish.sh",
               hubUrl,
               httpStaticEndpoint,
-              gitServerHtmlFileLocation)
+              gitServerHtmlFileLocation,
+              repositoryName)
       )
     }
   }
@@ -83,7 +90,7 @@ class GitHookSpec
     }
 
     "Discover an updated HTML page when a push is made" in {
-      val pushResult = gitClient.push()
+      val pushResult = gitClient.push(repoPath.value)
       withClue(s"Push result was: '$pushResult'") {
         executeDockerCommand(
           httpDumpServerContainer,

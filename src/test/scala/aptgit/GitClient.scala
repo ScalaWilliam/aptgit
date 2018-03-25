@@ -20,8 +20,9 @@ final case class GitClient(gitClientContainer: DockerContainer,
     )
   }
 
-  def push(): GitClient.PushResult = {
-    executeDockerCommand(gitClientContainer, "/clone-and-push.sh")
+  def push(repoPath: String): GitClient.PushResult = {
+    executeDockerCommand(gitClientContainer,
+                         Array("/clone-and-push.sh", repoPath))
   }
 
 }
