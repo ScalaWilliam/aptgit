@@ -9,9 +9,9 @@ import com.whisk.docker.{DockerContainer, DockerContainerManager}
 import scala.concurrent._
 import duration._
 
-final case class HttpDumpServer(httpDumpServerContainer: DockerContainer,
-                                spotifyDockerClient: DockerClient,
-                                containerManager: DockerContainerManager) {
+final case class HubServer(httpDumpServerContainer: DockerContainer,
+                           spotifyDockerClient: DockerClient,
+                           containerManager: DockerContainerManager) {
 
   def httpLines(): String = {
     val dockerContainerState =
@@ -36,7 +36,7 @@ final case class HttpDumpServer(httpDumpServerContainer: DockerContainer,
   }
 
 }
-object HttpDumpServer {
+object HubServer {
 
   /** This should match what's in the Dockerfile **/
   val ExposedPort = 9001

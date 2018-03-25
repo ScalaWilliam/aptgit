@@ -23,16 +23,15 @@ class GitHookSpec
 
   private val gitServerDockerImageName =
     "scalawilliam/aptgit-test-server"
-  private val httpDumpServerImageName =
+  private val hubServerImageName =
     "scalawilliam/aptgit-http-dump-server"
-  private val simpleHttpServerImageName =
+  private val topicHttpServerImageName =
     "trinitronx/python-simplehttpserver"
 
-  private val httpDumpServerName = "http-dump-server"
+  private val hubServerName = "http-dump-server"
 
-  private val httpDumpServer = HttpDumpServer(httpDumpServerContainer,
-                                              spotifyDockerClient,
-                                              containerManager)
+  private val hubServer =
+    HubServer(hubServerContainer, spotifyDockerClient, containerManager)
 
   private val executeDockerCommand =
     ExecuteDockerCommand(plainDockerClient, containerManager)
@@ -46,31 +45,36 @@ class GitHookSpec
 
   private val gitClient = GitClient(gitClientContainer, executeDockerCommand)
 
-  private val notifyEndpoint = "/notify-me"
+  private val hubPath = "/notify-me"
   private val hubUrl =
-    s"http://$httpDumpServerName:${HttpDumpServer.ExposedPort}$notifyEndpoint"
+    s"http://$hubServerName:${HubServer.ExposedPort}$hubPath"
 
-  private val staticFilename = "index.html"
+  private val topicFilename = "index.html"
   private lazy val staticServerName = "static-http-server"
-  private val httpStaticEndpoint =
-    s"http://$staticServerName:${StaticHttpServer.ExposedPort}/$staticFilename"
-  private val gitServerHtmlFileLocation = s"/target/$staticFilename"
-  private var repoPath = Option.empty[String]
+
+  /**
+    *  Topic: https://www.w3.org/TR/websub/#definitions
+    */
+  private val topicUrl =
+    s"http://$staticServerName:${StaticHttpServer.ExposedPort}/$topicFilename"
+
+  private val gitServerTopicFileLocation = s"/target/$topicFilename"
+  private var repositoryPath = Option.empty[String]
   private val repositoryName = "sample-repo"
 
   "Prepare environment" - {
     "1. Prepare Git repository" in {
-      repoPath =
+      repositoryPath =
         Some(plainGitServer.createRepository(repositoryName).right.value)
-      info(s"Found repo path: $repoPath")
+      info(s"Found repo path: $repositoryPath")
     }
     "2. Configure WebSub publisher" in {
       executeDockerCommand(
         gitServerContainer,
         Array("/test-setup/prepare-websub-publish.sh",
               hubUrl,
-              httpStaticEndpoint,
-              gitServerHtmlFileLocation,
+              topicUrl,
+              gitServerTopicFileLocation,
               repositoryName)
       )
     }
@@ -78,8 +82,7 @@ class GitHookSpec
 
   s"Verify that we can execute WebSub hooks against Docker image '$gitServerDockerImageName'" - {
     "Ensure the HTTP resource can be read" in {
-      executeDockerCommand(httpDumpServerContainer,
-                           s"wget -O - -q $httpStaticEndpoint") should include(
+      executeDockerCommand(hubServerContainer, s"wget -O - -q $topicUrl") should include(
         "never")
     }
 
@@ -90,19 +93,17 @@ class GitHookSpec
     }
 
     "Discover an updated HTML page when a push is made" in {
-      val pushResult = gitClient.push(repoPath.value)
+      val pushResult = gitClient.push(repositoryPath.value)
       withClue(s"Push result was: '$pushResult'") {
-        executeDockerCommand(
-          httpDumpServerContainer,
-          s"wget -O - -q $httpStaticEndpoint") should not include ("never")
+        executeDockerCommand(hubServerContainer, s"wget -O - -q $topicUrl") should not include ("never")
       }
     }
 
     "Discover a HUB HTTP POST item for the prior push" in {
       info("This is the WebSub notify POST")
-      val logLines = httpDumpServer.httpLines()
-      logLines should include(s"POST $notifyEndpoint")
-      val encodedStaticEndpoint = URLEncoder.encode(httpStaticEndpoint, "UTF-8")
+      val logLines = hubServer.httpLines()
+      logLines should include(s"POST $hubPath")
+      val encodedStaticEndpoint = URLEncoder.encode(topicUrl, "UTF-8")
       logLines should include(
         s"hub.url=$encodedStaticEndpoint&hub.mode=publish")
     }
@@ -121,24 +122,23 @@ class GitHookSpec
   private lazy val targetVolume2 =
     targetVolume.copy(container = "/var/www/")
 
-  private lazy val simpleHttpServerContainer =
-    DockerContainer(simpleHttpServerImageName, name = Some(staticServerName))
+  private lazy val topicHttpServerContainer =
+    DockerContainer(topicHttpServerImageName, name = Some(staticServerName))
       .withVolumes(List(targetVolume2))
       .withPortMapping(StaticHttpServer.ExposedPort -> DockerPortMapping())
 
-  private lazy val httpDumpServerContainer =
-    DockerContainer(image = httpDumpServerImageName,
-                    name = Some(httpDumpServerName))
+  private lazy val hubServerContainer =
+    DockerContainer(image = hubServerImageName, name = Some(hubServerName))
       .withLinks(
-        ContainerLink(simpleHttpServerContainer, alias = staticServerName)
+        ContainerLink(topicHttpServerContainer, alias = staticServerName)
       )
 
   private lazy val gitServerContainer =
     DockerContainer(gitServerDockerImageName, name = Some("git-server"))
       .withVolumes(List(targetVolume))
       .withLinks(
-        ContainerLink(simpleHttpServerContainer, alias = staticServerName),
-        ContainerLink(httpDumpServerContainer, alias = httpDumpServerName)
+        ContainerLink(topicHttpServerContainer, alias = staticServerName),
+        ContainerLink(hubServerContainer, alias = hubServerName)
       )
 
   private lazy val gitClientContainer =
@@ -150,10 +150,10 @@ class GitHookSpec
 
   override def dockerContainers: List[DockerContainer] = {
     val containers = super.dockerContainers.toBuffer
-    containers += simpleHttpServerContainer
+    containers += topicHttpServerContainer
     containers += gitServerContainer
     containers += gitClientContainer
-    containers += httpDumpServerContainer
+    containers += hubServerContainer
     containers.toList
   }
 
@@ -161,7 +161,7 @@ class GitHookSpec
 
     /** These could take a bit of time **/
     plainGitServer.build() should not be empty
-    httpDumpServer.build() should not be empty
+    hubServer.build() should not be empty
     super.startAllOrFail()
   }
 
