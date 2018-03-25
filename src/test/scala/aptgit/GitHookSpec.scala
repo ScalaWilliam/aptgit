@@ -42,7 +42,9 @@ class GitHookSpec
 
   private val gitClient = GitClient(gitClientContainer, executeDockerCommand)
 
-  private val hubUrl = s"http://$httpDumpServerName:${HttpDumpServer.ExposedPort}/notify"
+  private val notifyEndpoint = "/notify-me"
+  private val hubUrl =
+    s"http://$httpDumpServerName:${HttpDumpServer.ExposedPort}$notifyEndpoint"
 
   "Prepare environment" - {
     "1. Prepare Git repository" in {
@@ -58,7 +60,7 @@ class GitHookSpec
     }
   }
 
-  s"Verify that we can execute WebSub hooks against Docker image '${gitServerDockerImageName}'" - {
+  s"Verify that we can execute WebSub hooks against Docker image '$gitServerDockerImageName'" - {
     "Ensure the HTTP resource can be read" in {
       executeDockerCommand(
         httpDumpServerContainer,
@@ -74,7 +76,7 @@ class GitHookSpec
 
     "Discover an updated HTML page when a push is made" in {
       val pushResult = gitClient.push()
-      withClue(s"Push result was: '${pushResult}'") {
+      withClue(s"Push result was: '$pushResult'") {
         executeDockerCommand(
           httpDumpServerContainer,
           "wget -O - -q http://simple_http_server:8080/blah.html") should not include ("never")
@@ -84,7 +86,7 @@ class GitHookSpec
     "Discover a HUB HTTP POST item for the prior push" in {
       info("This is the WebSub notify POST")
       val logLines = httpDumpServer.httpLines()
-      logLines should include("POST /notify")
+      logLines should include(s"POST $notifyEndpoint")
       logLines should include(
         "hub.url=http%3A%2F%2Fsimple_http_server%3A8080%2Fblah.html&hub.mode=publish")
     }
