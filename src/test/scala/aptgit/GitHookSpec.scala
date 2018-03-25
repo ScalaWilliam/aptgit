@@ -120,17 +120,7 @@ class GitHookSpec
 
   private lazy val gitClientContainer =
     DockerContainer(gitServerDockerImageName, name = Some("git-client"))
-      .withVolumes {
-        val sshConfig = VolumeMapping(
-          host = getClass.getResource("client/sshconfig").getFile,
-          container = "/sshconfig"
-        )
-        val cloneAndPush = VolumeMapping(
-          host = getClass.getResource("client/clone-and-push.sh").getFile,
-          container = "/clone-and-push.sh"
-        )
-        List(sshConfig, cloneAndPush)
-      }
+      .withVolumes(gitClient.mappedVolumes)
       .withLinks(
         ContainerLink(gitServerContainer, alias = "git-server")
       )
