@@ -2,11 +2,7 @@ package aptgit
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.file.Paths
 
-import com.github.dockerjava.core.DockerClientBuilder
 import com.github.dockerjava.core.command.ExecStartResultCallback
-import com.github.dockerjava.netty.NettyDockerCmdExecFactory
-import com.spotify.docker.client.DockerClient.LogsParam
-import com.spotify.docker.client.{DefaultDockerClient, DockerClient}
 import com.whisk.docker.impl.spotify.DockerKitSpotify
 import com.whisk.docker.scalatest.DockerTestKit
 import com.whisk.docker.{
@@ -33,6 +29,14 @@ class GitHookSpec
     "scalawilliam/aptgit-http-dump-server"
   private val simpleHttpServerImageName =
     "trinitronx/python-simplehttpserver"
+
+  private val httpDumpServerContainer =
+    DockerContainer(image = httpDumpServerImageName,
+                    name = Some("http_dump_server"))
+
+  private val httpDumpServer = HttpDumpServer(httpDumpServerContainer,
+                                              spotifyDockerClient,
+                                              containerManager)
 
   "Prepare environment" - {
     "1. Prepare Git repository" in {
@@ -79,7 +83,7 @@ class GitHookSpec
 
     "Discover a HUB HTTP POST item for the prior push" in {
       info("This is the WebSub notify POST")
-      val logLines = httpLines()
+      val logLines = httpDumpServer.httpLines()
       logLines should include("POST /notify")
       logLines should include(
         "hub.url=http%3A%2F%2Fsimple_http_server%3A8080%2Fblah.html&hub.mode=publish")
@@ -87,21 +91,7 @@ class GitHookSpec
 
   }
 
-  def httpLines(): String = {
-    val dockerContainerState =
-      containerManager.getContainerState(httpDumpServerContainer)
-    val id =
-      Await.result(dockerContainerState.id, 5.seconds)
-    val logStream =
-      spotifyDockerClient.logs(id,
-                               LogsParam.stderr(),
-                               LogsParam.stdout(),
-                               LogsParam.tail(20))
-    try logStream.readFully()
-    finally logStream.close()
-  }
-
-  private val targetVolume = VolumeMapping(
+  private lazy val targetVolume = VolumeMapping(
     host = Paths
       .get("target/docker-env")
       .toAbsolutePath
@@ -110,19 +100,16 @@ class GitHookSpec
     rw = true,
   )
 
-  private val targetVolume2 =
+  private lazy val targetVolume2 =
     targetVolume.copy(container = "/var/www/")
 
-  private val simpleHttpServerContainer =
+  private lazy val simpleHttpServerContainer =
     DockerContainer(simpleHttpServerImageName,
                     name = Some("simple_http_server"))
       .withVolumes(List(targetVolume2))
       .withPortMapping(8080 -> DockerPortMapping())
 
-  private val httpDumpServerContainer =
-    DockerContainer(httpDumpServerImageName, name = Some("http_dump_server"))
-
-  private val gitServerContainer =
+  private lazy val gitServerContainer =
     DockerContainer(gitDockerImageName, name = Some("git-server"))
       .withVolumes(List(targetVolume))
       .withLinks(
@@ -130,7 +117,7 @@ class GitHookSpec
         ContainerLink(httpDumpServerContainer, alias = "http_dump_server")
       )
 
-  private val gitClientContainer =
+  private lazy val gitClientContainer =
     DockerContainer(gitDockerImageName, name = Some("git-client"))
       .withVolumes {
         val sshConfig = VolumeMapping(
@@ -228,12 +215,8 @@ class GitHookSpec
     assert(buildResult != null)
 
     /** This could take a bit of time **/
-    val buildResultHttpDumpServer =
-      spotifyDockerClient.build(
-        Paths.get("src/test/resources/aptgit/hub-http-dump-server"),
-        httpDumpServerImageName)
+    httpDumpServer.build() should not be empty
 
-    assert(buildResultHttpDumpServer != null)
     super.startAllOrFail()
   }
 

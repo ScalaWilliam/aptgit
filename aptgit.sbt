@@ -15,3 +15,5 @@ javacOptions in compile ++= Seq("--release", "9") ++ Seq(
 fork in Test := true
 
 cancelable in Global := true
+
+testOptions in Test += Tests.Argument("-oDF")
