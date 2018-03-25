@@ -50,7 +50,7 @@ class GitHookSpec
   private val staticFilename = "index.html"
   private lazy val staticServerName = "static-http-server"
   private val httpStaticEndpoint =
-    s"http://$staticServerName:8080/$staticFilename"
+    s"http://$staticServerName:${StaticHttpServer.ExposedPort}/$staticFilename"
   private val gitServerHtmlFileLocation = s"/target/$staticFilename"
 
   "Prepare environment" - {
@@ -118,7 +118,7 @@ class GitHookSpec
   private lazy val simpleHttpServerContainer =
     DockerContainer(simpleHttpServerImageName, name = Some(staticServerName))
       .withVolumes(List(targetVolume2))
-      .withPortMapping(8080 -> DockerPortMapping())
+      .withPortMapping(StaticHttpServer.ExposedPort -> DockerPortMapping())
 
   private lazy val httpDumpServerContainer =
     DockerContainer(image = httpDumpServerImageName,
