@@ -1,8 +1,6 @@
 package aptgit
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.file.Paths
 
-import com.github.dockerjava.core.command.ExecStartResultCallback
 import com.whisk.docker.impl.spotify.DockerKitSpotify
 import com.whisk.docker.scalatest.DockerTestKit
 import com.whisk.docker.{
@@ -14,16 +12,13 @@ import com.whisk.docker.{
 import org.scalatest.Matchers._
 import org.scalatest._
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
-
 class GitHookSpec
     extends FreeSpec
     with DockerTestKit
     with DockerKitSpotify
     with DockerClients {
 
-  private val gitDockerImageName =
+  private val gitServerDockerImageName =
     "scalawilliam/aptgit-test-server"
   private val httpDumpServerImageName =
     "scalawilliam/aptgit-http-dump-server"
@@ -38,44 +33,54 @@ class GitHookSpec
                                               spotifyDockerClient,
                                               containerManager)
 
+  private val plainGitServer =
+    PlainGitServer(gitServerContainer,
+                   plainDockerClient,
+                   spotifyDockerClient,
+                   containerManager)
+
+  private val executeDockerCommand =
+    ExecuteDockerCommand(plainDockerClient, containerManager)
+
   "Prepare environment" - {
     "1. Prepare Git repository" in {
-      executeCommand(gitServerContainer, "/test-setup/prepare-git-repo.sh") should include(
+      executeDockerCommand(gitServerContainer,
+                           "/test-setup/prepare-git-repo.sh") should include(
         "Initialized empty Git repository")
     }
     "2. Configure WebSub publisher" in {
-      executeCommand(gitServerContainer,
-                     "/test-setup/prepare-websub-publish.sh")
+      executeDockerCommand(gitServerContainer,
+                           "/test-setup/prepare-websub-publish.sh")
     }
   }
 
-  s"Verify that we can execute WebSub hooks against Docker image '${gitDockerImageName}'" - {
+  s"Verify that we can execute WebSub hooks against Docker image '${gitServerDockerImageName}'" - {
     "Ensure the HTTP resource can be read" in {
-      executeCommand(
+      executeDockerCommand(
         gitServerContainer,
         "wget -O - -q http://simple_http_server:8080/blah.html") should include(
         "never")
     }
 
     "Set up SSH key" in {
-      executeCommand(
+      executeDockerCommand(
         gitClientContainer,
         Array("ssh-keygen", "-t", "rsa", "-N", "", "-f", "/root/.ssh/id_rsa")
       )
-      executeCommand(
+      executeDockerCommand(
         gitClientContainer,
         Array("cp", "/sshconfig", "/root/.ssh/config")
       )
       val publicKey =
-        executeCommand(gitClientContainer, "cat /root/.ssh/id_rsa.pub")
-      addSshKey(publicKey)
+        executeDockerCommand(gitClientContainer, "cat /root/.ssh/id_rsa.pub")
+      plainGitServer.addSshKey(publicKey)
     }
 
     "Discover an updated HTML page when a push is made" in {
       val pushResult =
-        executeCommand(gitClientContainer, "/clone-and-push.sh")
+        executeDockerCommand(gitClientContainer, "/clone-and-push.sh")
       withClue(s"Push result was: '${pushResult}'") {
-        executeCommand(
+        executeDockerCommand(
           gitServerContainer,
           "wget -O - -q http://simple_http_server:8080/blah.html") should not include ("never")
       }
@@ -110,7 +115,7 @@ class GitHookSpec
       .withPortMapping(8080 -> DockerPortMapping())
 
   private lazy val gitServerContainer =
-    DockerContainer(gitDockerImageName, name = Some("git-server"))
+    DockerContainer(gitServerDockerImageName, name = Some("git-server"))
       .withVolumes(List(targetVolume))
       .withLinks(
         ContainerLink(simpleHttpServerContainer, alias = "simple_http_server"),
@@ -118,7 +123,7 @@ class GitHookSpec
       )
 
   private lazy val gitClientContainer =
-    DockerContainer(gitDockerImageName, name = Some("git-client"))
+    DockerContainer(gitServerDockerImageName, name = Some("git-client"))
       .withVolumes {
         val sshConfig = VolumeMapping(
           host = getClass.getResource("client/sshconfig").getFile,
@@ -143,80 +148,11 @@ class GitHookSpec
     containers.toList
   }
 
-  private def executeCommand(dockerContainer: DockerContainer,
-                             command: String): String = {
-    executeCommand(dockerContainer, command.split(" "))
-  }
-
-  /**
-    * https://github.com/spotify/docker-client/issues/513#issuecomment-351797933
-    */
-  private def executeCommand(container: DockerContainer,
-                             commandParts: Array[String]): String = {
-    val dockerContainerState =
-      containerManager.getContainerState(container)
-    val id =
-      Await.result(dockerContainerState.id, 5.seconds)
-
-    val response =
-      plainDockerClient
-        .execCreateCmd(id)
-        .withCmd(commandParts: _*)
-        .withAttachStderr(false)
-        .withAttachStdout(true)
-        .withAttachStderr(true)
-        .withTty(false)
-        .exec()
-
-    val baos = new ByteArrayOutputStream()
-    try {
-      plainDockerClient
-        .execStartCmd(response.getId)
-        .withDetach(false)
-        .withTty(false)
-        .exec(new ExecStartResultCallback(baos, baos))
-        .awaitCompletion()
-      new String(baos.toByteArray, "UTF-8")
-    } finally baos.close()
-  }
-
-  def addSshKey(publicKey: String): Unit = {
-    val dockerContainerState =
-      containerManager.getContainerState(gitServerContainer)
-    val id =
-      Await.result(dockerContainerState.id, 5.seconds)
-    val response =
-      plainDockerClient
-        .execCreateCmd(id)
-        .withCmd("tee", "-a", "/home/git/.ssh/authorized_keys")
-        .withAttachStdin(true)
-        .withAttachStdout(false)
-        .withAttachStderr(false)
-        .withTty(false)
-        .exec()
-    val bais = new ByteArrayInputStream(publicKey.getBytes("UTF-8"))
-    try {
-      plainDockerClient
-        .execStartCmd(response.getId)
-        .withDetach(false)
-        .withStdIn(bais)
-        .exec(new ExecStartResultCallback(null, null))
-        .awaitCompletion()
-    } finally bais.close()
-  }
-
   override def startAllOrFail(): Unit = {
 
-    /** This could take a bit of time **/
-    val buildResult =
-      spotifyDockerClient.build(
-        Paths.get("src/test/resources/aptgit/test-git-server"),
-        gitDockerImageName)
-    assert(buildResult != null)
-
-    /** This could take a bit of time **/
+    /** These could take a bit of time **/
+    plainGitServer.build() should not be empty
     httpDumpServer.build() should not be empty
-
     super.startAllOrFail()
   }
 
