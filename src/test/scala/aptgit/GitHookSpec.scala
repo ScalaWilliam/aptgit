@@ -58,6 +58,10 @@ class GitHookSpec
         gitClientContainer,
         Array("ssh-keygen", "-t", "rsa", "-N", "", "-f", "/root/.ssh/id_rsa")
       )
+      executeCommand(
+        gitClientContainer,
+        Array("cp", "/sshconfig", "/root/.ssh/config")
+      )
       val publicKey =
         executeCommand(gitClientContainer, "cat /root/.ssh/id_rsa.pub")
       addSshKey(publicKey)
@@ -131,7 +135,7 @@ class GitHookSpec
       .withVolumes {
         val sshConfig = VolumeMapping(
           host = getClass.getResource("client/sshconfig").getFile,
-          container = "/root/.ssh/config"
+          container = "/sshconfig"
         )
         val cloneAndPush = VolumeMapping(
           host = getClass.getResource("client/clone-and-push.sh").getFile,
