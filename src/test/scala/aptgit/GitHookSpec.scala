@@ -38,6 +38,8 @@ class GitHookSpec
   private val executeDockerCommand =
     ExecuteDockerCommand(plainDockerClient, containerManager)
 
+  private val gitClient = GitClient(gitClientContainer, executeDockerCommand)
+
   "Prepare environment" - {
     "1. Prepare Git repository" in {
       executeDockerCommand(gitServerContainer,
@@ -59,22 +61,13 @@ class GitHookSpec
     }
 
     "Set up SSH key" in {
-      executeDockerCommand(
-        gitClientContainer,
-        Array("ssh-keygen", "-t", "rsa", "-N", "", "-f", "/root/.ssh/id_rsa")
-      )
-      executeDockerCommand(
-        gitClientContainer,
-        Array("cp", "/sshconfig", "/root/.ssh/config")
-      )
-      val publicKey =
-        executeDockerCommand(gitClientContainer, "cat /root/.ssh/id_rsa.pub")
-      plainGitServer.addSshKey(publicKey)
+      val publicSshKey = gitClient.createSshKey()
+      gitClient.setupSshConfig()
+      plainGitServer.addSshKey(publicSshKey)
     }
 
     "Discover an updated HTML page when a push is made" in {
-      val pushResult =
-        executeDockerCommand(gitClientContainer, "/clone-and-push.sh")
+      val pushResult = gitClient.push()
       withClue(s"Push result was: '${pushResult}'") {
         executeDockerCommand(
           httpDumpServerContainer,
