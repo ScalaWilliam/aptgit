@@ -37,5 +37,9 @@ final case class HttpDumpServer(httpDumpServerContainer: DockerContainer,
 
 }
 object HttpDumpServer {
+
+  /** This should match what's in the Dockerfile **/
+  val ExposedPort = 9001
+
   type BuiltImageId = Option[String]
 }

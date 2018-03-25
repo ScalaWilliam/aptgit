@@ -42,7 +42,7 @@ class GitHookSpec
 
   private val gitClient = GitClient(gitClientContainer, executeDockerCommand)
 
-  private val hubUrl = s"http://$httpDumpServerName:9001/notify"
+  private val hubUrl = s"http://$httpDumpServerName:${HttpDumpServer.ExposedPort}/notify"
 
   "Prepare environment" - {
     "1. Prepare Git repository" in {
