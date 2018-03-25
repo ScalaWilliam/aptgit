@@ -25,6 +25,8 @@ class GitHookSpec
   private val simpleHttpServerImageName =
     "trinitronx/python-simplehttpserver"
 
+  private val httpDumpServerName = "http-dump-server"
+
   private val httpDumpServer = HttpDumpServer(httpDumpServerContainer,
                                               spotifyDockerClient,
                                               containerManager)
@@ -40,6 +42,8 @@ class GitHookSpec
 
   private val gitClient = GitClient(gitClientContainer, executeDockerCommand)
 
+  private val hubUrl = s"http://$httpDumpServerName:9001/notify"
+
   "Prepare environment" - {
     "1. Prepare Git repository" in {
       executeDockerCommand(gitServerContainer,
@@ -47,8 +51,10 @@ class GitHookSpec
         "Initialized empty Git repository")
     }
     "2. Configure WebSub publisher" in {
-      executeDockerCommand(gitServerContainer,
-                           "/test-setup/prepare-websub-publish.sh")
+      executeDockerCommand(
+        gitServerContainer,
+        Array("/test-setup/prepare-websub-publish.sh", hubUrl)
+      )
     }
   }
 
@@ -105,7 +111,7 @@ class GitHookSpec
 
   private lazy val httpDumpServerContainer =
     DockerContainer(image = httpDumpServerImageName,
-                    name = Some("http_dump_server"))
+                    name = Some(httpDumpServerName))
       .withLinks(
         ContainerLink(simpleHttpServerContainer, alias = "simple_http_server")
       )
@@ -115,7 +121,7 @@ class GitHookSpec
       .withVolumes(List(targetVolume))
       .withLinks(
         ContainerLink(simpleHttpServerContainer, alias = "simple_http_server"),
-        ContainerLink(httpDumpServerContainer, alias = "http_dump_server")
+        ContainerLink(httpDumpServerContainer, alias = httpDumpServerName)
       )
 
   private lazy val gitClientContainer =
