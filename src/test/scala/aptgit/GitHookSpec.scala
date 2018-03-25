@@ -25,10 +25,6 @@ class GitHookSpec
   private val simpleHttpServerImageName =
     "trinitronx/python-simplehttpserver"
 
-  private val httpDumpServerContainer =
-    DockerContainer(image = httpDumpServerImageName,
-                    name = Some("http_dump_server"))
-
   private val httpDumpServer = HttpDumpServer(httpDumpServerContainer,
                                               spotifyDockerClient,
                                               containerManager)
@@ -57,7 +53,7 @@ class GitHookSpec
   s"Verify that we can execute WebSub hooks against Docker image '${gitServerDockerImageName}'" - {
     "Ensure the HTTP resource can be read" in {
       executeDockerCommand(
-        gitServerContainer,
+        httpDumpServerContainer,
         "wget -O - -q http://simple_http_server:8080/blah.html") should include(
         "never")
     }
@@ -81,7 +77,7 @@ class GitHookSpec
         executeDockerCommand(gitClientContainer, "/clone-and-push.sh")
       withClue(s"Push result was: '${pushResult}'") {
         executeDockerCommand(
-          gitServerContainer,
+          httpDumpServerContainer,
           "wget -O - -q http://simple_http_server:8080/blah.html") should not include ("never")
       }
     }
@@ -113,6 +109,13 @@ class GitHookSpec
                     name = Some("simple_http_server"))
       .withVolumes(List(targetVolume2))
       .withPortMapping(8080 -> DockerPortMapping())
+
+  private lazy val httpDumpServerContainer =
+    DockerContainer(image = httpDumpServerImageName,
+                    name = Some("http_dump_server"))
+      .withLinks(
+        ContainerLink(simpleHttpServerContainer, alias = "simple_http_server")
+      )
 
   private lazy val gitServerContainer =
     DockerContainer(gitServerDockerImageName, name = Some("git-server"))
