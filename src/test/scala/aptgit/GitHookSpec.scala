@@ -47,8 +47,10 @@ class GitHookSpec
   private val hubUrl =
     s"http://$httpDumpServerName:${HttpDumpServer.ExposedPort}$notifyEndpoint"
 
-  private val httpStaticEndpoint = "http://simple_http_server:8080/blah.html"
-  private val gitServerHtmlFileLocation = "/target/blah.html"
+  private val staticFilename = "index.html"
+  private val httpStaticEndpoint =
+    s"http://simple_http_server:8080/$staticFilename"
+  private val gitServerHtmlFileLocation = s"/target/$staticFilename"
 
   "Prepare environment" - {
     "1. Prepare Git repository" in {
