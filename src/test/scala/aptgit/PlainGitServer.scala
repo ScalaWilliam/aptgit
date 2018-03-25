@@ -3,6 +3,7 @@ package aptgit
 import java.io.ByteArrayInputStream
 import java.nio.file.Paths
 
+import aptgit.PlainGitServer.GitRepositoryPath
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.core.command.ExecStartResultCallback
 import com.whisk.docker.{DockerContainer, DockerContainerManager}
@@ -12,9 +13,19 @@ import scala.concurrent.duration._
 
 final case class PlainGitServer(
     gitServerContainer: DockerContainer,
+    executeDockerCommand: ExecuteDockerCommand,
     plainDockerClient: DockerClient,
     spotifyDockerClient: com.spotify.docker.client.DockerClient,
     containerManager: DockerContainerManager) {
+
+  def createRepository(name: String): GitRepositoryPath = {
+    assert(
+      executeDockerCommand(gitServerContainer,
+                           Array("/test-setup/prepare-git-repo.sh", name))
+        .contains("Initialized empty Git repository")
+    )
+    s"/git-server/repos/$name.git"
+  }
 
   def addSshKey(publicKey: String): Unit = {
     val dockerContainerState =
@@ -49,4 +60,7 @@ final case class PlainGitServer(
     }
   }
 
+}
+object PlainGitServer {
+  type GitRepositoryPath = String
 }

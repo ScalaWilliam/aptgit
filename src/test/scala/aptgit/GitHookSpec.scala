@@ -32,14 +32,15 @@ class GitHookSpec
                                               spotifyDockerClient,
                                               containerManager)
 
+  private val executeDockerCommand =
+    ExecuteDockerCommand(plainDockerClient, containerManager)
+
   private val plainGitServer =
     PlainGitServer(gitServerContainer,
+                   executeDockerCommand,
                    plainDockerClient,
                    spotifyDockerClient,
                    containerManager)
-
-  private val executeDockerCommand =
-    ExecuteDockerCommand(plainDockerClient, containerManager)
 
   private val gitClient = GitClient(gitClientContainer, executeDockerCommand)
 
@@ -55,9 +56,7 @@ class GitHookSpec
 
   "Prepare environment" - {
     "1. Prepare Git repository" in {
-      executeDockerCommand(gitServerContainer,
-                           "/test-setup/prepare-git-repo.sh") should include(
-        "Initialized empty Git repository")
+      plainGitServer.createRepository("sample")
     }
     "2. Configure WebSub publisher" in {
       executeDockerCommand(

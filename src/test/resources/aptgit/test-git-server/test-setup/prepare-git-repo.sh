@@ -1,4 +1,5 @@
 #!/bin/sh
-git init --bare /git-server/repos/sample.git
-chown -R git:git /git-server/repos/sample.git
-cp /test-setup/post-receive /git-server/repos/sample.git/hooks/post-receive
+name="$1"
+git init --bare /git-server/repos/${name}.git
+chown -R git:git /git-server/repos/${name}.git
+cp /test-setup/post-receive /git-server/repos/${name}.git/hooks/post-receive
