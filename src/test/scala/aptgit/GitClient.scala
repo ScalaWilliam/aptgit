@@ -13,21 +13,6 @@ final case class GitClient(gitClientContainer: DockerContainer,
     executeDockerCommand(gitClientContainer, "cat /root/.ssh/id_rsa.pub")
   }
 
-  def mappedVolumes: List[VolumeMapping] = {
-    val sshConfig = VolumeMapping(
-      host = getClass.getResource("client/sshconfig").getFile,
-      container = "/sshconfig"
-    )
-    val cloneAndPush = VolumeMapping(
-      host = getClass.getResource("client/clone-and-push.sh").getFile,
-      container = "/clone-and-push.sh"
-    )
-    List(
-      sshConfig,
-      cloneAndPush
-    )
-  }
-
   def setupSshConfig(): Unit = {
     executeDockerCommand(
       gitClientContainer,
@@ -43,4 +28,19 @@ final case class GitClient(gitClientContainer: DockerContainer,
 object GitClient {
   type CommandLineOutput = String
   type PushResult = CommandLineOutput
+
+  def mappedVolumes: List[VolumeMapping] = {
+    val sshConfig = VolumeMapping(
+      host = getClass.getResource("client/sshconfig").getFile,
+      container = "/sshconfig"
+    )
+    val cloneAndPush = VolumeMapping(
+      host = getClass.getResource("client/clone-and-push.sh").getFile,
+      container = "/clone-and-push.sh"
+    )
+    List(
+      sshConfig,
+      cloneAndPush
+    )
+  }
 }

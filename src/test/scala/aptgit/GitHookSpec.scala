@@ -120,7 +120,7 @@ class GitHookSpec
 
   private lazy val gitClientContainer =
     DockerContainer(gitServerDockerImageName, name = Some("git-client"))
-      .withVolumes(gitClient.mappedVolumes)
+      .withVolumes(GitClient.mappedVolumes)
       .withLinks(
         ContainerLink(gitServerContainer, alias = "git-server")
       )
