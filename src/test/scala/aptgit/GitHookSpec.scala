@@ -80,7 +80,7 @@ class GitHookSpec
     }
   }
 
-  s"Verify that we can execute WebSub hooks against Docker image '$gitServerDockerImageName'" - {
+  s"Verify that WebSub works against the Git server" - {
     "Ensure the HTTP resource can be read" in {
       executeDockerCommand(hubServerContainer, s"wget -O - -q $topicUrl") should include(
         "never")
