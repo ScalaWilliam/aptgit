@@ -1,4 +1,5 @@
 package aptgit
+import java.net.URLEncoder
 import java.nio.file.Paths
 
 import com.whisk.docker.impl.spotify.DockerKitSpotify
@@ -46,6 +47,9 @@ class GitHookSpec
   private val hubUrl =
     s"http://$httpDumpServerName:${HttpDumpServer.ExposedPort}$notifyEndpoint"
 
+  private val httpStaticEndpoint = "http://simple_http_server:8080/blah.html"
+  private val gitServerHtmlFileLocation = "/target/blah.html"
+
   "Prepare environment" - {
     "1. Prepare Git repository" in {
       executeDockerCommand(gitServerContainer,
@@ -55,16 +59,18 @@ class GitHookSpec
     "2. Configure WebSub publisher" in {
       executeDockerCommand(
         gitServerContainer,
-        Array("/test-setup/prepare-websub-publish.sh", hubUrl)
+        Array("/test-setup/prepare-websub-publish.sh",
+              hubUrl,
+              httpStaticEndpoint,
+              gitServerHtmlFileLocation)
       )
     }
   }
 
   s"Verify that we can execute WebSub hooks against Docker image '$gitServerDockerImageName'" - {
     "Ensure the HTTP resource can be read" in {
-      executeDockerCommand(
-        httpDumpServerContainer,
-        "wget -O - -q http://simple_http_server:8080/blah.html") should include(
+      executeDockerCommand(httpDumpServerContainer,
+                           s"wget -O - -q $httpStaticEndpoint") should include(
         "never")
     }
 
@@ -79,7 +85,7 @@ class GitHookSpec
       withClue(s"Push result was: '$pushResult'") {
         executeDockerCommand(
           httpDumpServerContainer,
-          "wget -O - -q http://simple_http_server:8080/blah.html") should not include ("never")
+          s"wget -O - -q $httpStaticEndpoint") should not include ("never")
       }
     }
 
@@ -87,8 +93,9 @@ class GitHookSpec
       info("This is the WebSub notify POST")
       val logLines = httpDumpServer.httpLines()
       logLines should include(s"POST $notifyEndpoint")
+      val encodedStaticEndpoint = URLEncoder.encode(httpStaticEndpoint, "UTF-8")
       logLines should include(
-        "hub.url=http%3A%2F%2Fsimple_http_server%3A8080%2Fblah.html&hub.mode=publish")
+        s"hub.url=$encodedStaticEndpoint&hub.mode=publish")
     }
 
   }
